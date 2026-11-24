@@ -1,0 +1,15 @@
+# Modules
+":floppy_disk: cluster":
+- changed-files:
+  - any-glob-to-any-file:
+    - modules/cluster/**/*
+
+":floppy_disk: topic":
+- changed-files:
+  - any-glob-to-any-file:
+    - modules/topic/**/*
+
+":floppy_disk: vpc-connection":
+- changed-files:
+  - any-glob-to-any-file:
+    - modules/vpc-connection/**/*
