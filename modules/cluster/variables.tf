@@ -412,8 +412,8 @@ variable "authentication" {
     (Optional) `sasl_iam.enabled` - Whether to enable IAM client authentication. Defaults to `false`.
     (Optional) `sasl_scram` - The configuration for SASL/SCRAM client authentication. `sasl_scram` is defined below.
       (Optional) `enabled` - Whether to enable SCRAM client authentication via AWS Secrets Manager. Defaults to `false`.
-      (Optional) `kms_key` - The ARN of a KMS key to encrypt AWS SecretsManager Secret resources for storing SASL/SCRAM authentication data. Only required when the MSK cluster has SASL/SCRAM authentication enabled. The Username/Password Authentication based on SASL/SCRAM needs to create a Secret resource in AWS SecretsManager with a custom AWS KMS Key. A secret created with the default AWS KMS key cannot be used with an Amazon MSK cluster.
-      (Optional) `users` - A list of usernames to be allowed for SASL/SCRAM authentication to the MSK cluster. The password for each username is randomly generated and stored in AWS SecretsManager secret.
+      (Optional) `kms_key` - The ARN of a KMS key to encrypt AWS SecretsManager Secret resources for storing SASL/SCRAM authentication data. Required when `sasl_scram.users` is non-empty. The Username/Password Authentication based on SASL/SCRAM needs to create a Secret resource in AWS SecretsManager with a custom AWS KMS Key. A secret created with the default AWS KMS key cannot be used with an Amazon MSK cluster.
+      (Optional) `users` - A set of usernames whose credentials and cluster association are managed by this module. Requires `sasl_scram.enabled` to be `true` and `sasl_scram.kms_key` to be provided when non-empty. The password for each username is randomly generated and stored in AWS SecretsManager secret. Defaults to `[]`; leave empty to manage credentials and their cluster association outside this module, even when SASL/SCRAM is enabled.
     (Optional) `tls` - The configuration for TLS client authentication. `tls` is defined below.
       (Optional) `enabled` - Whether to enable TLS client authentication. Defaults to `false`.
       (Optional) `acm_private_certificate_authorities` - A list of ACM Private CA ARNs to enable client authentication.
@@ -437,6 +437,21 @@ variable "authentication" {
   })
   default  = {}
   nullable = false
+
+  validation {
+    condition = anytrue([
+      length(var.authentication.sasl_scram.users) == 0,
+      var.authentication.sasl_scram.enabled,
+    ])
+    error_message = "`sasl_scram.enabled` should be `true` when `sasl_scram.users` is provided."
+  }
+  validation {
+    condition = anytrue([
+      length(var.authentication.sasl_scram.users) == 0,
+      var.authentication.sasl_scram.kms_key != null,
+    ])
+    error_message = "`sasl_scram.kms_key` should be provided when `sasl_scram.users` is provided. A secret created with the default AWS KMS key cannot be used with an Amazon MSK cluster."
+  }
 }
 
 variable "encryption_at_rest" {
@@ -543,12 +558,12 @@ variable "policy" {
 
 variable "timeouts" {
   description = "(Optional) How long to wait for the MSK cluster to be created/updated/deleted."
-  type        = map(string)
-  default = {
-    create = "120m"
-    update = "120m"
-    delete = "120m"
-  }
+  type = object({
+    create = optional(string, "120m")
+    update = optional(string, "120m")
+    delete = optional(string, "120m")
+  })
+  default  = {}
   nullable = false
 }
 
