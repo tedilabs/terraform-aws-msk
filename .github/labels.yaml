@@ -1,0 +1,10 @@
+# Modules
+- color: "fbca04"
+  description: "This issue or pull request is related to cluster module."
+  name: ":floppy_disk: cluster"
+- color: "fbca04"
+  description: "This issue or pull request is related to topic module."
+  name: ":floppy_disk: topic"
+- color: "fbca04"
+  description: "This issue or pull request is related to vpc-connection module."
+  name: ":floppy_disk: vpc-connection"
